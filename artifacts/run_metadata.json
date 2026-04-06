@@ -1,0 +1,40 @@
+{
+  "data_path": "C:\\Users\\Darsh\\OneDrive\\Desktop\\full stack\\mini-project\\dataset_V2.parquet",
+  "target_column": "LBL_NOK",
+  "sequence_length": 2048,
+  "feature_shape": {
+    "rows": 564,
+    "columns": 502
+  },
+  "dataset_summary": {
+    "rows": 564,
+    "columns": 364,
+    "target_distribution": {
+      "0": 409,
+      "1": 155
+    },
+    "top_missing_ratio": {
+      "DRY_acComp1TotalWeight": 0.723404255319149,
+      "DRY_acComp1DosRate": 0.723404255319149,
+      "DRY_acBatchCounter": 0.723404255319149,
+      "CV_Image4Name": 0.723404255319149,
+      "CV_Width": 0.723404255319149,
+      "DRY_acRegCircuitInletTemp": 0.723404255319149,
+      "SET_BackPressure": 0.723404255319149,
+      "DRY_acWeight": 0.723404255319149,
+      "DRY_acTotalWeight": 0.723404255319149,
+      "DRY_acDryCircuitDewPoint": 0.723404255319149,
+      "SIM_TotalWeight": 0.6382978723404256,
+      "SIM_InjectionPressureMax": 0.6382978723404256,
+      "SIM_TempGradVerStd": 0.6382978723404256,
+      "SIM_FlowRateMax": 0.6382978723404256,
+      "SIM_FlowRateArea": 0.6382978723404256
+    }
+  },
+  "sequence_stats": {
+    "min": 8041,
+    "max": 12079,
+    "median": 11387.0,
+    "mean": 10989.260638297872
+  }
+}
