@@ -1,2 +1,3 @@
 /.venv
 /dataset_V2.parquet
+/frontend/node_modules
