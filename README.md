@@ -1,70 +1,47 @@
-# Multi-Sensor Defect Detection Pipeline
+# Multi-Sensor Defect Detection System
 
-This project is a production-style machine learning pipeline for defect detection using a Parquet dataset that contains:
+End-to-end machine learning system for industrial defect detection using mixed-modality manufacturing data.
 
-- tabular process features such as `SET_*`, `QUA_*`, `ENV_*`, and `CALC_*`
-- time-series sensor signals stored inside `DXP_*` columns
-- defect labels stored in `LBL_*` columns
+The project includes:
 
-The current target used by the pipeline is `LBL_NOK`, which is treated as a binary defect label:
+- a full training pipeline with two model families (XGBoost baseline and LSTM fusion)
+- reproducible preprocessing and artifact export
+- FastAPI inference service for model serving
+- React dashboard for model metrics, plots, and live prediction
 
-- `0` = OK part
-- `1` = defective part
+## Overview
 
-The system has two modeling stages:
+The dataset is expected to contain:
 
-- Phase 1 baseline: feature engineering over sensor sequences plus XGBoost
-- Phase 2 advanced model: LSTM-based multi-modal fusion of time-series and tabular data
+- tabular process columns, typically prefixed with `SET_`, `QUA_`, `ENV_`, `CALC_`
+- sequence sensor columns, prefixed with `DXP_`
+- label columns, prefixed with `LBL_`
 
-It also includes:
+By default, the binary target is `LBL_NOK`:
 
-- training logs with ETA
-- saved evaluation plots
-- saved preprocessing artifacts
-- TorchScript and ONNX model export
-- a FastAPI inference service
+- `0`: non-defective
+- `1`: defective
 
-## What The Pipeline Does
+## Key Capabilities
 
-At a high level, the pipeline does the following when you run [main.py](./main.py):
+- Automatic schema discovery for tabular, sequence, and label fields
+- Stratified train/validation/test splitting
+- Baseline model with engineered sequence statistics + XGBoost
+- Deep model with multimodal fusion (BiLSTM sequence branch + tabular branch)
+- Export to TorchScript and ONNX
+- Saved plots, metrics, predictions, split indices, and run metadata
+- API endpoints for health, schema, run summary, and prediction
 
-1. Loads the Parquet dataset from the path defined in [.env](./.env)
-2. Detects the important column groups automatically
-3. Splits the data into train, validation, and test sets using stratification
-4. Builds a Phase 1 baseline using engineered features and XGBoost
-5. Builds a Phase 2 fusion model using:
-   - an LSTM branch for `DXP_*` sensor sequences
-   - a dense branch for tabular process features
-   - a fusion head for final classification
-6. Evaluates both models on the same test split
-7. Saves metrics, predictions, plots, trained models, and preprocessing artifacts
-8. Exposes the deep learning model through a FastAPI `/predict` endpoint
-
-## Dataset Assumptions
-
-The code is written around the structure observed in `dataset_V2.parquet`.
-
-### Column groups
-
-- Time-series columns: `DXP_*`
-- Tabular columns: `SET_*`, `QUA_*`, `ENV_*`, `CALC_*`
-- Labels: `LBL_*`
-
-### Important notes
-
-- Each row represents one manufacturing cycle or part
-- Each `DXP_*` cell contains a sequence, typically a NumPy array
-- Sequence lengths are not identical across rows, so they must be resized before modeling
-- Image-related columns are not used in this project
-
-## Project Structure
+## Repository Structure
 
 ```text
-/project
+.
 |-- api/
 |   |-- app.py
 |-- data/
 |   |-- processed/
+|-- frontend/
+|   |-- src/
 |-- logs/
 |-- models/
 |-- plots/
@@ -77,342 +54,107 @@ The code is written around the structure observed in `dataset_V2.parquet`.
 |   |-- logging_utils.py
 |   |-- modeling.py
 |   |-- visualization.py
-|-- .env
 |-- Dockerfile
 |-- main.py
-|-- README.md
 |-- requirements.txt
 ```
 
-## Main Components
+## Tech Stack
 
-### [src/config.py](./src/config.py)
+- Python 3.11
+- PyTorch, XGBoost, scikit-learn, pandas, NumPy
+- FastAPI + Uvicorn
+- React + Vite + Recharts
+- Docker (optional runtime packaging)
 
-Loads environment configuration and defines all important paths and training hyperparameters.
+## Local Setup
 
-This file controls:
-
-- dataset path
-- model output paths
-- split sizes
-- sequence lengths
-- deep learning hyperparameters
-- plot and logging locations
-
-### [src/data.py](./src/data.py)
-
-Responsible for:
-
-- loading the Parquet file
-- identifying tabular, sequence, and label columns
-- validating the binary target
-- summarizing missingness and class balance
-- creating train, validation, and test split indices
-
-### [src/features.py](./src/features.py)
-
-Responsible for feature preparation for both models.
-
-For Phase 1 it:
-
-- converts tabular values to numeric
-- imputes missing tabular values
-- rescales sensor sequences to a fixed length
-- extracts time-series statistics such as:
-  - mean
-  - standard deviation
-  - minimum
-  - maximum
-  - absolute peak
-  - slope
-
-For Phase 2 it:
-
-- resizes raw `DXP_*` sequences to a fixed LSTM length
-- normalizes each sensor channel
-- saves preprocessing objects so inference uses the same transformations as training
-
-### [src/modeling.py](./src/modeling.py)
-
-Contains the classical ML stage:
-
-- XGBoost training
-- binary evaluation metrics
-- metrics and prediction saving
-
-### [src/deep_learning.py](./src/deep_learning.py)
-
-Contains the deep learning system:
-
-- PyTorch dataset and dataloader logic
-- LSTM encoder for time-series signals
-- dense encoder for tabular input
-- fusion classifier head
-- attention pooling over LSTM output
-- early stopping
-- learning rate scheduling
-- model checkpointing
-- TorchScript export
-- ONNX export
-
-### [src/inference.py](./src/inference.py)
-
-Loads the saved preprocessor and TorchScript model and provides a single prediction function for deployment use.
-
-### [src/visualization.py](./src/visualization.py)
-
-Generates:
-
-- confusion matrices
-- XGBoost feature importance chart
-- training and validation curves
-- ROC curve
-- model comparison chart
-- performance summary heatmap
-
-### [api/app.py](./api/app.py)
-
-Defines the FastAPI service:
-
-- `GET /health`
-- `POST /predict`
-
-## How The Models Work
-
-## Phase 1: XGBoost Baseline
-
-The baseline does not directly consume raw sequences. Instead, it summarizes each `DXP_*` signal into engineered statistical features.
-
-### Baseline flow
-
-1. Load tabular columns
-2. Resize each `DXP_*` sequence to a fixed feature-engineering length
-3. Extract statistics from each resized signal
-4. Concatenate engineered time-series features with tabular features
-5. Impute missing values
-6. Standardize features
-7. Train XGBoost on the final feature matrix
-
-### Why this baseline is strong
-
-It gives a simple but powerful benchmark and often works surprisingly well on industrial data because the summary statistics can capture a lot of defect-related signal.
-
-## Phase 2: LSTM Fusion Model
-
-The advanced model keeps more of the raw time-series structure.
-
-### Fusion architecture
-
-The model has three parts.
-
-#### 1. Sequence branch
-
-- input shape: `(sequence_length, number_of_dxp_channels)`
-- processed by a bidirectional LSTM
-- optionally pooled using attention
-- converted into a compact learned sequence representation
-
-#### 2. Tabular branch
-
-- input shape: `(number_of_tabular_features,)`
-- processed by dense layers
-- uses batch normalization and dropout
-- learns a tabular representation
-
-#### 3. Fusion head
-
-- concatenates sequence and tabular representations
-- applies dense layers
-- outputs a final binary defect score
-
-### Training behavior
-
-The deep learning training loop includes:
-
-- binary cross-entropy with class weighting
-- AdamW optimizer
-- `ReduceLROnPlateau` scheduler
-- early stopping based on validation performance
-- checkpoint saving for the best model
-- per-epoch ETA logging
-
-## Data Flow End To End
-
-When the pipeline runs, the data moves through these stages:
-
-1. Raw Parquet file is loaded
-2. Column groups are detected
-3. Split indices are created and saved
-4. Baseline features are created for XGBoost
-5. A multimodal preprocessor is fitted on training data only
-6. Raw tabular and sequence inputs are transformed consistently for train, validation, and test
-7. XGBoost is trained and evaluated
-8. LSTM fusion model is trained and evaluated
-9. Artifacts are exported for deployment
-
-## Setup
-
-Create and activate the virtual environment:
+### 1. Create and activate virtual environment
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-Install dependencies:
+### 2. Install Python dependencies
 
 ```powershell
+python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
 ```
 
-## Configuration
+### 3. Configure environment variables
 
-Project configuration is stored in [.env](./.env).
+Create a `.env` file in the project root (or set equivalent system variables).
 
-### Important variables
+Recommended minimum:
 
-- `DATA_PATH`: path to the Parquet file
-- `TARGET_COLUMN`: current target column
-- `TEST_SIZE`: test split ratio
-- `VAL_SIZE`: validation split ratio
-- `FEATURE_SEQUENCE_LENGTH`: sequence length used for engineered baseline features
-- `LSTM_SEQUENCE_LENGTH`: sequence length used for the LSTM model
-- `BATCH_SIZE`: deep learning batch size
-- `MAX_EPOCHS`: maximum number of training epochs
-- `PATIENCE`: early stopping patience
-- `LEARNING_RATE`: learning rate for AdamW
+```env
+DATA_PATH=dataset_V2.parquet
+TARGET_COLUMN=LBL_NOK
+TEST_SIZE=0.2
+VAL_SIZE=0.2
+RANDOM_STATE=42
+FEATURE_SEQUENCE_LENGTH=512
+LSTM_SEQUENCE_LENGTH=128
+BATCH_SIZE=32
+MAX_EPOCHS=25
+PATIENCE=6
+LEARNING_RATE=0.001
+```
 
-### Output paths
+All output paths and advanced hyperparameters can also be overridden via environment variables in [src/config.py](./src/config.py).
 
-The same `.env` file also defines where the system saves:
+## Training Pipeline
 
-- models
-- metrics
-- predictions
-- plots
-- split indices
-- metadata
-
-## How To Train
-
-Run the full training and evaluation pipeline:
+Run the full pipeline:
 
 ```powershell
 python main.py
 ```
 
-This single command:
+Pipeline outputs include:
 
-- trains the baseline model
-- trains the LSTM fusion model
-- evaluates both
-- saves all outputs
-- prepares the API artifacts
+- trained models in `models/`
+- evaluation metrics JSON files
+- test prediction CSV files
+- visualizations in `plots/`
+- split indices in `data/processed/split_indices.json`
+- run metadata in `models/run_metadata.json`
 
-## Logging
+## Model Architecture
 
-Logs are written to [logs/pipeline.log](./logs/pipeline.log).
+### 1. Baseline model
 
-The logger includes:
+- Resamples each `DXP_*` sequence to a fixed engineering length
+- Extracts statistical features per sequence channel
+- Concatenates with cleaned tabular features
+- Trains an XGBoost binary classifier
 
-- timestamp
-- log level
-- ETA placeholder
-- module name
-- message
+### 2. Fusion model
 
-During deep learning training, the log shows:
+- Sequence branch: bidirectional LSTM (+ optional attention pooling)
+- Tabular branch: dense encoder with normalization/dropout
+- Fusion head: concatenated representation to binary logit
 
-- epoch number
-- train loss
-- validation loss
-- train accuracy
-- validation accuracy
-- train F1
-- validation F1
-- learning rate
-- epoch time
-- estimated time remaining
+Training uses class weighting, early stopping, and LR scheduling.
 
-## Generated Outputs
+## API
 
-### Models
-
-- `models/xgboost_baseline.json`: trained XGBoost baseline
-- `models/fusion_best.pt`: PyTorch checkpoint with best validation model
-- `models/fusion_model.ts`: TorchScript model for deployment
-- `models/fusion_model.onnx`: ONNX export for interoperability
-- `models/preprocessor_bundle.joblib`: saved preprocessing pipeline for inference
-
-### Metrics and metadata
-
-- `models/xgboost_metrics.json`
-- `models/fusion_metrics.json`
-- `models/comparison_metrics.json`
-- `models/run_metadata.json`
-- `data/processed/split_indices.json`
-
-### Predictions
-
-- `models/xgboost_test_predictions.csv`
-- `models/fusion_test_predictions.csv`
-
-### Plots
-
-- `plots/xgboost_feature_importance.png`
-- `plots/xgboost_confusion_matrix.png`
-- `plots/fusion_confusion_matrix.png`
-- `plots/fusion_training_curves.png`
-- `plots/fusion_roc_curve.png`
-- `plots/model_comparison.png`
-- `plots/performance_summary.png`
-
-## Evaluation Outputs Explained
-
-### Confusion matrix
-
-Shows how many parts were correctly and incorrectly classified.
-
-### Training curves
-
-Show whether the fusion model is learning smoothly and whether validation performance is diverging from training performance.
-
-### ROC curve
-
-Shows how well the fusion model separates positive and negative classes across thresholds.
-
-### Model comparison chart
-
-Compares XGBoost and the LSTM fusion model on:
-
-- accuracy
-- precision
-- recall
-- F1-score
-- ROC-AUC
-
-## API Usage
-
-Start the API locally:
+Start API server:
 
 ```powershell
 uvicorn api.app:app --host 0.0.0.0 --port 8000
 ```
 
-### Health check
+Available endpoints:
 
-```http
-GET /health
-```
+- `GET /health`
+- `GET /artifacts/schema`
+- `GET /artifacts/summary`
+- `POST /predict`
 
-### Prediction endpoint
-
-```http
-POST /predict
-Content-Type: application/json
-```
-
-### Request body
+Example prediction request:
 
 ```json
 {
@@ -428,7 +170,7 @@ Content-Type: application/json
 }
 ```
 
-### Response body
+Example response:
 
 ```json
 {
@@ -438,71 +180,57 @@ Content-Type: application/json
 }
 ```
 
-### Missing inputs
+Inference behavior is resilient to partial payloads:
 
-The inference layer is robust to partial payloads:
+- missing tabular values are imputed
+- missing sequence fields are zero-filled
+- sequence lengths are normalized by the saved preprocessor
 
-- missing tabular fields are imputed
-- missing sequence fields are replaced with zero-filled sequences
-- short sequences are resized to the required length
+## Frontend Dashboard
+
+From the `frontend/` directory:
+
+```powershell
+npm install
+npm run dev
+```
+
+Optional frontend environment variable:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000
+```
+
+The frontend consumes backend endpoints for health, schema, summary, and prediction.
 
 ## Docker
 
-You can build the API image with:
+Build image:
 
 ```powershell
 docker build -t defect-detection-api .
 ```
 
-Run the container with:
+Run container:
 
 ```powershell
 docker run -p 8000:8000 defect-detection-api
 ```
 
-## Current Results
+## Current Saved Results
 
-On the currently saved split:
+The repository currently includes saved evaluation artifacts where:
 
-- XGBoost baseline achieved perfect test performance
-- LSTM fusion model achieved very strong performance but did not beat the perfect baseline on that split
+- XGBoost baseline scores are perfect on the saved split
+- LSTM fusion model performs strongly but does not exceed the saved XGBoost F1 score
 
-This means:
+Treat these as split-specific results, not guaranteed production performance.
 
-- the deep learning system is working correctly end to end
-- the comparison pipeline is valid
-- the claim that the LSTM model is always better would be misleading on the current data split
+## Operational Notes
 
-## Important Practical Notes
-
-### 1. Perfect baseline scores deserve caution
-
-When a baseline reaches `1.0`, it is worth checking for:
-
-- feature leakage
-- duplicate rows or near-duplicates
-- easy class separation in the current split
-- process-specific correlations that may not generalize
-
-### 2. Training and inference must use the same preprocessing
-
-This project saves the preprocessor bundle intentionally so deployment uses the exact same scaling and normalization learned during training.
-
-### 3. ONNX export warning
-
-The LSTM ONNX export can show a warning about variable batch sizes. The current export is still generated successfully, but if you deploy ONNX broadly, you may want to harden the exported interface further.
-
-## Next Good Improvements
-
-If you want to continue developing this project, the strongest next steps are:
-
-- cross-validation instead of a single split
-- leakage checks and duplicate analysis
-- threshold tuning based on business cost
-- multi-label support for all `LBL_*` targets
-- richer sequence encoders such as temporal CNNs or transformers
-- experiment tracking with MLflow
-- hyperparameter tuning with Optuna
+- Keep training and inference preprocessing aligned by always using `models/preprocessor_bundle.joblib`.
+- Re-run training after changing sequence lengths, feature logic, or target column.
+- For robust comparison, prefer cross-validation and leakage checks over a single split.
 
 ## Quick Start
 
@@ -511,5 +239,3 @@ If you want to continue developing this project, the strongest next steps are:
 python main.py
 uvicorn api.app:app --host 0.0.0.0 --port 8000
 ```
-
-That is enough to train the models, save all artifacts, and serve predictions from the exported fusion model.
