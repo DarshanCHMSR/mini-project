@@ -1,11 +1,8 @@
 {
   "data_path": "C:\\Users\\Darsh\\OneDrive\\Desktop\\full stack\\mini-project\\dataset_V2.parquet",
   "target_column": "LBL_NOK",
-  "sequence_length": 2048,
-  "feature_shape": {
-    "rows": 564,
-    "columns": 502
-  },
+  "feature_sequence_length": 512,
+  "lstm_sequence_length": 128,
   "dataset_summary": {
     "rows": 564,
     "columns": 364,
@@ -36,5 +33,23 @@
     "max": 12079,
     "median": 11387.0,
     "mean": 10989.260638297872
-  }
+  },
+  "model_comparison": [
+    {
+      "model": "XGBoost",
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1_score": 1.0,
+      "roc_auc": 1.0
+    },
+    {
+      "model": "LSTM Fusion",
+      "accuracy": 0.9911504424778761,
+      "precision": 0.96875,
+      "recall": 1.0,
+      "f1_score": 0.9841269841269841,
+      "roc_auc": 0.9980330448465775
+    }
+  ]
 }
