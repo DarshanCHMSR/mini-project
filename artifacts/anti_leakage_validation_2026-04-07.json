@@ -1,0 +1,353 @@
+{
+  "dataset_rows": 564,
+  "target_column": "LBL_NOK",
+  "baseline_random_split": {
+    "threshold": 0.1,
+    "train": {
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "auc": 1.0
+    },
+    "val": {
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "auc": 1.0
+    }
+  },
+  "time_aware_split": {
+    "threshold": 0.1,
+    "train": {
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "auc": 1.0
+    },
+    "val": {
+      "accuracy": 1.0,
+      "f1": 1.0,
+      "auc": 1.0
+    },
+    "test": {
+      "accuracy": 1.0,
+      "f1": 0.0,
+      "auc": null
+    },
+    "time_column_used": "MET_JobCycleID"
+  },
+  "group_candidates_considered": [
+    {
+      "column": "SET_ToolTemperature",
+      "n_unique": 8,
+      "dup_ratio": 0.9858156028368794
+    },
+    {
+      "column": "QUA_ToolClosingTime",
+      "n_unique": 8,
+      "dup_ratio": 0.9858156028368794
+    },
+    {
+      "column": "QUA_ToolOpeningTime",
+      "n_unique": 9,
+      "dup_ratio": 0.9840425531914894
+    },
+    {
+      "column": "QUA_ToolTemperature1",
+      "n_unique": 18,
+      "dup_ratio": 0.9680851063829787
+    },
+    {
+      "column": "QUA_ToolTemperature2",
+      "n_unique": 21,
+      "dup_ratio": 0.9627659574468085
+    },
+    {
+      "column": "SIM_PartWeight",
+      "n_unique": 26,
+      "dup_ratio": 0.9539007092198581
+    },
+    {
+      "column": "DOS_svBatchWeight",
+      "n_unique": 30,
+      "dup_ratio": 0.9468085106382979
+    },
+    {
+      "column": "DRY_acBatchCounter",
+      "n_unique": 86,
+      "dup_ratio": 0.8475177304964538
+    },
+    {
+      "column": "QUA_AreaCavityPressure1Max",
+      "n_unique": 99,
+      "dup_ratio": 0.824468085106383
+    },
+    {
+      "column": "QUA_CavityPressure1Max",
+      "n_unique": 105,
+      "dup_ratio": 0.8138297872340425
+    }
+  ],
+  "group_aware_results": [
+    {
+      "group_col": "SET_ToolTemperature",
+      "n_groups": 8,
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.9285714285714286,
+          "f1": 0.8867924528301887,
+          "auc": 0.9322033898305084
+        },
+        {
+          "fold": 2,
+          "accuracy": 0.8888888888888888,
+          "f1": 0.8888888888888888,
+          "auc": 1.0
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.53125,
+          "f1": 0.0,
+          "auc": null
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.5,
+          "f1": 0.0,
+          "auc": 0.6712239583333334
+        },
+        {
+          "fold": 5,
+          "accuracy": 0.625,
+          "f1": 0.0,
+          "auc": null
+        }
+      ],
+      "mean": {
+        "accuracy": 0.6947420634920635,
+        "f1": 0.3551362683438155,
+        "auc": 0.8678091160546139
+      },
+      "std": {
+        "accuracy": 0.17993734649774917,
+        "f1": 0.434951828532966,
+        "auc": 0.14173540669111598
+      }
+    },
+    {
+      "group_col": "QUA_ToolClosingTime",
+      "n_groups": 8,
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.7727272727272727,
+          "f1": 0.7058823529411765,
+          "auc": 0.8711970899470899
+        },
+        {
+          "fold": 2,
+          "accuracy": 1.0,
+          "f1": 1.0,
+          "auc": 1.0
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.5588235294117647,
+          "f1": 0.1509433962264151,
+          "auc": 0.8775510204081632
+        },
+        {
+          "fold": 4,
+          "accuracy": 1.0,
+          "f1": 0.0,
+          "auc": null
+        },
+        {
+          "fold": 5,
+          "accuracy": 1.0,
+          "f1": 1.0,
+          "auc": 1.0
+        }
+      ],
+      "mean": {
+        "accuracy": 0.8663101604278076,
+        "f1": 0.5713651498335184,
+        "auc": 0.9371870275888132
+      },
+      "std": {
+        "accuracy": 0.1771579547965502,
+        "f1": 0.42160719463423346,
+        "auc": 0.06285313084617603
+      }
+    },
+    {
+      "group_col": "QUA_ToolOpeningTime",
+      "n_groups": 9,
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.9586776859504132,
+          "f1": 0.9425287356321839,
+          "auc": 1.0
+        },
+        {
+          "fold": 2,
+          "accuracy": 1.0,
+          "f1": 1.0,
+          "auc": 1.0
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.8666666666666667,
+          "f1": 0.8181818181818182,
+          "auc": 1.0
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.9047619047619048,
+          "f1": 0.9142857142857143,
+          "auc": 0.9969758064516129
+        },
+        {
+          "fold": 5,
+          "accuracy": 0.6412213740458015,
+          "f1": 0.0784313725490196,
+          "auc": 0.9069767441860466
+        }
+      ],
+      "mean": {
+        "accuracy": 0.8742655262849572,
+        "f1": 0.7506855281297472,
+        "auc": 0.9807905101275318
+      },
+      "std": {
+        "accuracy": 0.12508550614708305,
+        "f1": 0.34123538559926153,
+        "auc": 0.036925463742637145
+      }
+    },
+    {
+      "group_col": "QUA_ToolTemperature1",
+      "n_groups": 18,
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.49537037037037035,
+          "f1": 0.6354515050167224,
+          "auc": 0.5913005654632448
+        },
+        {
+          "fold": 2,
+          "accuracy": 0.7176470588235294,
+          "f1": 0.5,
+          "auc": 0.8073770491803278
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.7529411764705882,
+          "f1": 0.5333333333333333,
+          "auc": 0.8561643835616438
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.8829787234042553,
+          "f1": 0.0,
+          "auc": null
+        },
+        {
+          "fold": 5,
+          "accuracy": 0.8571428571428571,
+          "f1": 0.6666666666666666,
+          "auc": 0.81875
+        }
+      ],
+      "mean": {
+        "accuracy": 0.7412160372423201,
+        "f1": 0.4670903010033444,
+        "auc": 0.7683979995513042
+      },
+      "std": {
+        "accuracy": 0.13759996679755432,
+        "f1": 0.2415867370779827,
+        "auc": 0.10382813874618994
+      }
+    },
+    {
+      "group_col": "QUA_ToolTemperature2",
+      "n_groups": 21,
+      "folds": [
+        {
+          "fold": 1,
+          "accuracy": 0.49537037037037035,
+          "f1": 0.6354515050167224,
+          "auc": 0.5913005654632448
+        },
+        {
+          "fold": 2,
+          "accuracy": 0.5813953488372093,
+          "f1": 0.0,
+          "auc": 0.7605555555555555
+        },
+        {
+          "fold": 3,
+          "accuracy": 0.6976744186046512,
+          "f1": 0.3157894736842105,
+          "auc": 0.7477477477477478
+        },
+        {
+          "fold": 4,
+          "accuracy": 0.8522727272727273,
+          "f1": 0.0,
+          "auc": null
+        },
+        {
+          "fold": 5,
+          "accuracy": 0.5909090909090909,
+          "f1": 0.0,
+          "auc": 0.6551535087719298
+        }
+      ],
+      "mean": {
+        "accuracy": 0.6435243911988098,
+        "f1": 0.1902481957401866,
+        "auc": 0.6886893443846195
+      },
+      "std": {
+        "accuracy": 0.12254476316731212,
+        "f1": 0.2539880812187007,
+        "auc": 0.06939357651451838
+      }
+    }
+  ],
+  "feature_leakage_scan": {
+    "suspicious_count": 0,
+    "top20_suspicious": [],
+    "removed_feature_count": 0,
+    "random_split_after_removal": {
+      "threshold": 0.1,
+      "train": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "auc": 1.0
+      },
+      "val": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "auc": 1.0
+      },
+      "test": {
+        "accuracy": 1.0,
+        "f1": 1.0,
+        "auc": 1.0
+      }
+    },
+    "metric_drop_vs_baseline": {
+      "accuracy_drop": 0.0,
+      "f1_drop": 0.0,
+      "auc_drop": 0.0
+    }
+  }
+}

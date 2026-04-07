@@ -1,255 +1,277 @@
 # Multi-Sensor Defect Detection System
 
-End-to-end machine learning system for industrial defect detection using mixed-modality manufacturing data.
+End-to-end multimodal defect detection project using tabular process data + long sequence sensor traces.
 
-The project includes:
+This repository includes:
 
-- a full training pipeline with two model families (XGBoost baseline and LSTM fusion)
-- reproducible preprocessing and artifact export
-- FastAPI inference service for model serving
-- React dashboard for model metrics, plots, and live prediction
+- model training pipeline (XGBoost baseline + BiLSTM fusion)
+- artifact export and production-serving policy generation
+- FastAPI inference service
+- React dashboard for metrics and visualization
 
-## Overview
+## 1) Current System Status
 
-The dataset is expected to contain:
+This repo has been upgraded with:
 
-- tabular process columns, typically prefixed with `SET_`, `QUA_`, `ENV_`, `CALC_`
-- sequence sensor columns, prefixed with `DXP_`
-- label columns, prefixed with `LBL_`
+- validation-tuned decision thresholds per model (not fixed 0.5)
+- model-selection policy for production (`models/serving_config.json`)
+- inference routing to selected model (`xgboost` or `fusion`)
+- leakage/overfitting diagnostics artifacts in `artifacts/`
 
-By default, the binary target is `LBL_NOK`:
+Current saved results are strong on random split, but group-aware validation shows harder generalization. Use the anti-leakage sections below before claiming production confidence.
 
-- `0`: non-defective
-- `1`: defective
+## 2) Data and Target
 
-## Key Capabilities
+Expected schema:
 
-- Automatic schema discovery for tabular, sequence, and label fields
-- Stratified train/validation/test splitting
-- Baseline model with engineered sequence statistics + XGBoost
-- Deep model with multimodal fusion (BiLSTM sequence branch + tabular branch)
-- Validation-tuned decision thresholds per model (instead of fixed 0.5)
-- Production serving policy that auto-selects the best validated model
-- Export to TorchScript and ONNX
-- Saved plots, metrics, predictions, split indices, and run metadata
-- API endpoints for health, schema, run summary, and prediction
+- tabular columns: `SET_*`, `QUA_*`, `ENV_*`, `CALC_*`
+- sequence columns: `DXP_*`
+- labels: `LBL_*`
 
-## Repository Structure
+Default binary target:
 
-```text
-.
-|-- api/
-|   |-- app.py
-|-- data/
-|   |-- processed/
-|-- frontend/
-|   |-- src/
-|-- logs/
-|-- models/
-|-- plots/
-|-- src/
-|   |-- config.py
-|   |-- data.py
-|   |-- deep_learning.py
-|   |-- features.py
-|   |-- inference.py
-|   |-- logging_utils.py
-|   |-- modeling.py
-|   |-- visualization.py
-|-- Dockerfile
-|-- main.py
-|-- requirements.txt
-```
+- `LBL_NOK = 0`: non-defective
+- `LBL_NOK = 1`: defective
 
-## Tech Stack
+Current dataset snapshot (`dataset_V2.parquet`):
 
-- Python 3.11
-- PyTorch, XGBoost, scikit-learn, pandas, NumPy
-- FastAPI + Uvicorn
-- React + Vite + Recharts
-- Docker (optional runtime packaging)
+- rows: 564
+- columns: 364
+- tabular columns: 58
+- sequence channels: 74
 
-## Local Setup
+## 3) End-to-End Pipeline (How Model Works)
 
-### 1. Create and activate virtual environment
+Main entrypoint: `main.py`
+
+### Stage A: Load and Schema Detection
+
+- Reads parquet dataset
+- Detects tabular, sequence, and label columns
+- Validates binary target
+- Builds stratified train/val/test indices
+
+Code path:
+
+- `src/data.py`
+
+Artifacts:
+
+- `data/processed/split_indices.json`
+
+### Stage B: Baseline Features + XGBoost
+
+- Tabular cleaning: numeric coercion, median imputation, standardization
+- Sequence engineering: each `DXP_*` signal is resampled to `FEATURE_SEQUENCE_LENGTH` and summarized by:
+  - mean, std, min, max, peak_abs, slope
+- Combined feature matrix feeds XGBoost classifier
+
+Code path:
+
+- `src/features.py`
+- `src/modeling.py`
+
+Artifacts:
+
+- `models/xgboost_baseline.json`
+- `models/xgboost_preprocessor.joblib`
+- `models/xgboost_metrics.json`
+- `models/xgboost_test_predictions.csv`
+
+### Stage C: Fusion BiLSTM Model
+
+- Sequence branch:
+  - bidirectional LSTM
+  - attention pooling (if enabled)
+- Tabular branch:
+  - dense layers + batch norm + dropout
+- Fusion head:
+  - concat(sequence_embedding, tabular_embedding) -> binary logit
+- Training:
+  - BCEWithLogits + class weighting
+  - AdamW + ReduceLROnPlateau
+  - early stopping by validation performance
+
+Code path:
+
+- `src/deep_learning.py`
+- `src/features.py`
+
+Artifacts:
+
+- `models/fusion_best.pt`
+- `models/fusion_model.ts`
+- `models/fusion_model.onnx`
+- `models/fusion_metrics.json`
+- `models/fusion_test_predictions.csv`
+
+### Stage D: Threshold Tuning + Production Selection
+
+- Finds F1-optimal threshold per model on validation split
+- Compares models by validation F1
+- Writes serving policy consumed by API
+
+Serving policy artifact:
+
+- `models/serving_config.json`
+
+Contents include:
+
+- selected production model
+- per-model thresholds
+- validation and test metric snapshot
+
+### Stage E: Report and Plot Generation
+
+- confusion matrices
+- ROC curve
+- training curves
+- feature importance
+- model comparison and summary heatmap
+
+Plot outputs (in `plots/`):
+
+- `xgboost_confusion_matrix.png`
+- `fusion_confusion_matrix.png`
+- `fusion_roc_curve.png`
+- `fusion_training_curves.png`
+- `xgboost_feature_importance.png`
+- `model_comparison.png`
+- `performance_summary.png`
+
+## 4) Graphs and How to Read Them
+
+You can view these directly from the filesystem or through the API-mounted route (`/plots/...`).
+
+### Confusion Matrices
+
+- `plots/xgboost_confusion_matrix.png`
+- `plots/fusion_confusion_matrix.png`
+
+Use to inspect false positives/false negatives. In production, false negatives are often the highest business risk.
+
+### ROC Curve
+
+- `plots/fusion_roc_curve.png`
+
+Use to understand threshold sensitivity. AUC near 1.0 means good ranking, but not necessarily perfect deployment behavior.
+
+### Training Curves
+
+- `plots/fusion_training_curves.png`
+
+Use to detect optimization instability and early stopping behavior.
+
+### Feature Importance (XGBoost)
+
+- `plots/xgboost_feature_importance.png`
+
+Use to identify dominant engineered features and potential process levers.
+
+### Model Comparison
+
+- `plots/model_comparison.png`
+- `plots/performance_summary.png`
+
+Use to compare model family behavior across accuracy, precision, recall, F1, and AUC.
+
+## 5) Anti-Leakage and Overfitting Validation
+
+Additional analysis artifacts:
+
+- `artifacts/model_analysis_report.md`
+- `artifacts/overfitting_check_2026-04-07.json`
+- `artifacts/anti_leakage_validation_2026-04-07.json`
+- `artifacts/anti_leakage_ablation_2026-04-07.json`
+
+Key findings:
+
+- random split remains near-perfect
+- label-shuffle sanity check drops strongly (good sign)
+- exact row overlap leakage not found
+- group-aware validation can drop sharply for some group columns
+
+Conclusion: random-split metrics are optimistic. For real production confidence, prefer group-aware or process-aware validation.
+
+## 6) API Service (FastAPI)
+
+Start API:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
+& "c:/Users/Darsh/OneDrive/Desktop/full stack/mini-project/.venv/Scripts/python.exe" -m uvicorn api.app:app --host 127.0.0.1 --port 8000
 ```
 
-### 2. Install Python dependencies
-
-```powershell
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-### 3. Configure environment variables
-
-Create a `.env` file in the project root (or set equivalent system variables).
-
-Recommended minimum:
-
-```env
-DATA_PATH=dataset_V2.parquet
-TARGET_COLUMN=LBL_NOK
-TEST_SIZE=0.2
-VAL_SIZE=0.2
-RANDOM_STATE=42
-FEATURE_SEQUENCE_LENGTH=512
-LSTM_SEQUENCE_LENGTH=128
-BATCH_SIZE=32
-MAX_EPOCHS=25
-PATIENCE=6
-LEARNING_RATE=0.001
-```
-
-All output paths and advanced hyperparameters can also be overridden via environment variables in [src/config.py](./src/config.py).
-
-## Training Pipeline
-
-Run the full pipeline:
-
-```powershell
-python main.py
-```
-
-Pipeline outputs include:
-
-- trained models in `models/`
-- serving policy in `models/serving_config.json`
-- baseline preprocessor in `models/xgboost_preprocessor.joblib`
-- evaluation metrics JSON files
-- test prediction CSV files
-- visualizations in `plots/`
-- split indices in `data/processed/split_indices.json`
-- run metadata in `models/run_metadata.json`
-
-## Model Architecture
-
-### 1. Baseline model
-
-- Resamples each `DXP_*` sequence to a fixed engineering length
-- Extracts statistical features per sequence channel
-- Concatenates with cleaned tabular features
-- Trains an XGBoost binary classifier
-
-### 2. Fusion model
-
-- Sequence branch: bidirectional LSTM (+ optional attention pooling)
-- Tabular branch: dense encoder with normalization/dropout
-- Fusion head: concatenated representation to binary logit
-
-Training uses class weighting, early stopping, and LR scheduling.
-
-### 3. Threshold and serving strategy
-
-- Both models are calibrated on the validation split using F1-optimal threshold search.
-- The pipeline writes a serving policy (`models/serving_config.json`) with:
-  - selected production model (`xgboost` or `fusion`)
-  - per-model thresholds
-  - validation and test F1 snapshots for auditability
-- The API uses this policy at inference time so deployment follows validated performance.
-
-## API
-
-Start API server:
-
-```powershell
-uvicorn api.app:app --host 0.0.0.0 --port 8000
-```
-
-Available endpoints:
+Endpoints:
 
 - `GET /health`
 - `GET /artifacts/schema`
 - `GET /artifacts/summary`
 - `POST /predict`
 
-Example prediction request:
+`/predict` returns:
 
-```json
-{
-  "tabular": {
-    "SET_CylinderTemperature": 200.0,
-    "QUA_CycleTime": 58.0,
-    "ENV_AirTemperature": 22.0
-  },
-  "sequences": {
-    "DXP_Inj1PrsAct": [0.1, 0.2, 0.3],
-    "DXP_Inj1VelAct": [0.0, 0.0, 0.1]
-  }
-}
-```
+- `predicted_label`
+- `defect_probability`
+- `threshold`
+- `model_used`
 
-Example response:
+## 7) Why FastAPI Can "Stop Automatically"
 
-```json
-{
-  "predicted_label": 1,
-  "defect_probability": 0.9683,
-  "threshold": 0.5
-}
-```
+The API itself is stable in current code and was verified healthy (`/health` returns `status=ok`).
 
-Inference behavior is resilient to partial payloads:
+Most common reasons it appears to stop:
 
-- missing tabular values are imputed
-- missing sequence fields are zero-filled
-- sequence lengths are normalized by the saved preprocessor
-- production prediction automatically uses the selected best model from `serving_config.json`
+1. Started in a terminal session that gets closed or reused.
+2. Started via a non-background command, then interrupted by another run.
+3. Auto-reload mode restarts due to file changes (if using `--reload`).
+4. Startup failure due to missing artifacts after clean workspace.
 
-## Frontend Dashboard
+Recommended run pattern:
 
-From the `frontend/` directory:
+- use a dedicated terminal for API only
+- keep training and API terminals separate
+- verify artifacts exist before startup
+
+Quick health check:
 
 ```powershell
+curl http://127.0.0.1:8000/health
+```
+
+## 8) Setup and Run
+
+### Python environment
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+### Train pipeline
+
+```powershell
+python main.py
+```
+
+### Run API
+
+```powershell
+uvicorn api.app:app --host 127.0.0.1 --port 8000
+```
+
+### Run frontend
+
+```powershell
+cd frontend
 npm install
 npm run dev
 ```
 
-Optional frontend environment variable:
+## 9) Important Production Notes
 
-```env
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-The frontend consumes backend endpoints for health, schema, summary, and prediction.
-
-## Docker
-
-Build image:
-
-```powershell
-docker build -t defect-detection-api .
-```
-
-Run container:
-
-```powershell
-docker run -p 8000:8000 defect-detection-api
-```
-
-## Current Saved Results
-
-The repository currently includes saved evaluation artifacts where:
-
-- XGBoost baseline scores are perfect on the saved split
-- LSTM fusion model performs strongly but does not exceed the saved XGBoost F1 score
-
-Treat these as split-specific results, not guaranteed production performance.
-
-## Operational Notes
-
-- Keep training and inference preprocessing aligned by always using `models/preprocessor_bundle.joblib`.
-- Re-run training after changing sequence lengths, feature logic, or target column.
-- For robust comparison, prefer cross-validation and leakage checks over a single split.
-
-## Quick Start
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-python main.py
-uvicorn api.app:app --host 0.0.0.0 --port 8000
-```
+- Keep preprocessors and models version-locked with each run.
+- Re-run full pipeline after changing feature engineering, sequence length, or target definition.
+- Prefer group-aware validation for go-live decisions.
+- Keep `models/serving_config.json` as the source of truth for serving model and threshold.
