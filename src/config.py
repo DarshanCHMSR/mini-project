@@ -17,6 +17,7 @@ class Config:
     logs_dir: Path
     data_path: Path
     xgb_model_path: Path
+    xgb_preprocessor_path: Path
     fusion_checkpoint_path: Path
     fusion_torchscript_path: Path
     fusion_onnx_path: Path
@@ -26,6 +27,7 @@ class Config:
     xgb_metrics_path: Path
     fusion_metrics_path: Path
     comparison_metrics_path: Path
+    serving_config_path: Path
     xgb_predictions_path: Path
     fusion_predictions_path: Path
     xgb_feature_importance_path: Path
@@ -84,6 +86,7 @@ def load_config() -> Config:
         logs_dir=logs_dir,
         data_path=data_path,
         xgb_model_path=_resolve_path(project_root, os.getenv("XGB_MODEL_PATH", "models/xgboost_baseline.json")),
+        xgb_preprocessor_path=_resolve_path(project_root, os.getenv("XGB_PREPROCESSOR_PATH", "models/xgboost_preprocessor.joblib")),
         fusion_checkpoint_path=_resolve_path(project_root, os.getenv("FUSION_CHECKPOINT_PATH", "models/fusion_best.pt")),
         fusion_torchscript_path=_resolve_path(project_root, os.getenv("FUSION_TORCHSCRIPT_PATH", "models/fusion_model.ts")),
         fusion_onnx_path=_resolve_path(project_root, os.getenv("FUSION_ONNX_PATH", "models/fusion_model.onnx")),
@@ -93,6 +96,7 @@ def load_config() -> Config:
         xgb_metrics_path=_resolve_path(project_root, os.getenv("XGB_METRICS_PATH", "models/xgboost_metrics.json")),
         fusion_metrics_path=_resolve_path(project_root, os.getenv("FUSION_METRICS_PATH", "models/fusion_metrics.json")),
         comparison_metrics_path=_resolve_path(project_root, os.getenv("COMPARISON_METRICS_PATH", "models/comparison_metrics.json")),
+        serving_config_path=_resolve_path(project_root, os.getenv("SERVING_CONFIG_PATH", "models/serving_config.json")),
         xgb_predictions_path=_resolve_path(project_root, os.getenv("XGB_PREDICTIONS_PATH", "models/xgboost_test_predictions.csv")),
         fusion_predictions_path=_resolve_path(project_root, os.getenv("FUSION_PREDICTIONS_PATH", "models/fusion_test_predictions.csv")),
         xgb_feature_importance_path=_resolve_path(project_root, os.getenv("XGB_FEATURE_IMPORTANCE_PATH", "plots/xgboost_feature_importance.png")),

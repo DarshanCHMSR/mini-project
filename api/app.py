@@ -21,7 +21,13 @@ class PredictionRequest(BaseModel):
 @lru_cache(maxsize=1)
 def get_artifacts():
     config = load_config()
-    return load_inference_artifacts(str(config.preprocessor_path), str(config.fusion_torchscript_path))
+    return load_inference_artifacts(
+        str(config.preprocessor_path),
+        str(config.fusion_torchscript_path),
+        str(config.xgb_model_path),
+        str(config.xgb_preprocessor_path),
+        str(config.serving_config_path),
+    )
 
 
 app = FastAPI(title="Defect Detection API", version="2.0.0")
@@ -122,9 +128,11 @@ def artifact_summary() -> dict:
     xgboost_metrics = _read_json(config.xgb_metrics_path)
     fusion_metrics = _read_json(config.fusion_metrics_path)
     metadata = _read_json(config.metadata_path)
+    serving = _read_json(config.serving_config_path)
     return {
         "health": health(),
         "comparison": comparison,
+        "serving": serving,
         "models": {
             "xgboost": xgboost_metrics,
             "fusion": fusion_metrics,

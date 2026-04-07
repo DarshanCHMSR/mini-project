@@ -42,5 +42,6 @@
   },
   "roc_auc": 0.9980330448465775,
   "best_epoch": 5,
-  "best_val_f1": 1.0
+  "best_val_f1": 1.0,
+  "best_threshold": 0.5
 }

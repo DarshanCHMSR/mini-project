@@ -28,6 +28,8 @@ By default, the binary target is `LBL_NOK`:
 - Stratified train/validation/test splitting
 - Baseline model with engineered sequence statistics + XGBoost
 - Deep model with multimodal fusion (BiLSTM sequence branch + tabular branch)
+- Validation-tuned decision thresholds per model (instead of fixed 0.5)
+- Production serving policy that auto-selects the best validated model
 - Export to TorchScript and ONNX
 - Saved plots, metrics, predictions, split indices, and run metadata
 - API endpoints for health, schema, run summary, and prediction
@@ -116,6 +118,8 @@ python main.py
 Pipeline outputs include:
 
 - trained models in `models/`
+- serving policy in `models/serving_config.json`
+- baseline preprocessor in `models/xgboost_preprocessor.joblib`
 - evaluation metrics JSON files
 - test prediction CSV files
 - visualizations in `plots/`
@@ -138,6 +142,15 @@ Pipeline outputs include:
 - Fusion head: concatenated representation to binary logit
 
 Training uses class weighting, early stopping, and LR scheduling.
+
+### 3. Threshold and serving strategy
+
+- Both models are calibrated on the validation split using F1-optimal threshold search.
+- The pipeline writes a serving policy (`models/serving_config.json`) with:
+  - selected production model (`xgboost` or `fusion`)
+  - per-model thresholds
+  - validation and test F1 snapshots for auditability
+- The API uses this policy at inference time so deployment follows validated performance.
 
 ## API
 
@@ -185,6 +198,7 @@ Inference behavior is resilient to partial payloads:
 - missing tabular values are imputed
 - missing sequence fields are zero-filled
 - sequence lengths are normalized by the saved preprocessor
+- production prediction automatically uses the selected best model from `serving_config.json`
 
 ## Frontend Dashboard
 

@@ -71,6 +71,18 @@ def evaluate_xgboost(model: XGBClassifier, x_test: pd.DataFrame, y_test: pd.Seri
     return metrics, y_score
 
 
+def find_best_threshold(y_true: np.ndarray, y_score: np.ndarray) -> tuple[float, float]:
+    best_threshold = 0.5
+    best_f1 = -1.0
+    for threshold in np.linspace(0.1, 0.9, 81):
+        predictions = (y_score >= threshold).astype(int)
+        f1 = f1_score(y_true, predictions, zero_division=0)
+        if f1 > best_f1:
+            best_f1 = float(f1)
+            best_threshold = float(threshold)
+    return best_threshold, best_f1
+
+
 def save_metrics(metrics: dict, destination: Path) -> None:
     destination.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
     LOGGER.info("Saved metrics to %s", destination)

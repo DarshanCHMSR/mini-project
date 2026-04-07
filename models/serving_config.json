@@ -1,0 +1,17 @@
+{
+  "selected_model": "xgboost",
+  "selection_basis": "best_validation_f1",
+  "feature_sequence_length": 512,
+  "thresholds": {
+    "xgboost": 0.1,
+    "fusion": 0.5
+  },
+  "validation_f1": {
+    "xgboost": 1.0,
+    "fusion": 1.0
+  },
+  "test_f1": {
+    "xgboost": 1.0,
+    "fusion": 0.9841269841269841
+  }
+}

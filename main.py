@@ -4,6 +4,7 @@ import json
 import logging
 import random
 
+import joblib
 import numpy as np
 import pandas as pd
 import torch
@@ -34,7 +35,14 @@ from src.features import (
     prepare_tabular_features,
 )
 from src.logging_utils import configure_logging
-from src.modeling import compute_binary_metrics, evaluate_xgboost, save_metrics, save_predictions, train_xgboost
+from src.modeling import (
+    compute_binary_metrics,
+    evaluate_xgboost,
+    find_best_threshold,
+    save_metrics,
+    save_predictions,
+    train_xgboost,
+)
 from src.visualization import (
     plot_confusion_matrix,
     plot_feature_importance,
@@ -109,15 +117,24 @@ def main() -> None:
 
     xgb_preprocessor = fit_feature_preprocessor(subset_frame(baseline_frame, train_idx))
     xgb_train = xgb_preprocessor.transform(subset_frame(baseline_frame, train_idx))
+    xgb_val = xgb_preprocessor.transform(subset_frame(baseline_frame, val_idx))
     xgb_test = xgb_preprocessor.transform(subset_frame(baseline_frame, test_idx))
     y_train = target.loc[train_idx]
+    y_val = target.loc[val_idx]
     y_test = target.loc[test_idx]
 
     xgb_model = train_xgboost(xgb_train, y_train, config.random_state)
     xgb_model.save_model(config.xgb_model_path)
+    joblib.dump(xgb_preprocessor, config.xgb_preprocessor_path)
     LOGGER.info("Saved XGBoost model to %s", config.xgb_model_path)
+    LOGGER.info("Saved XGBoost preprocessor to %s", config.xgb_preprocessor_path)
+    _, xgb_val_scores = evaluate_xgboost(xgb_model, xgb_val, y_val)
+    xgb_threshold, xgb_best_val_f1 = find_best_threshold(y_val.to_numpy(), xgb_val_scores)
     xgb_metrics, xgb_scores = evaluate_xgboost(xgb_model, xgb_test, y_test)
-    xgb_predictions = xgb_model.predict(xgb_test)
+    xgb_predictions = (xgb_scores >= xgb_threshold).astype(int)
+    xgb_metrics = compute_binary_metrics(y_test.to_numpy(), xgb_predictions, xgb_scores)
+    xgb_metrics["best_threshold"] = xgb_threshold
+    xgb_metrics["best_val_f1"] = xgb_best_val_f1
     save_metrics(xgb_metrics, config.xgb_metrics_path)
     save_predictions(y_test.index, y_test.to_numpy(), xgb_predictions, xgb_scores, config.xgb_predictions_path)
     plot_confusion_matrix(xgb_metrics["confusion_matrix"], "XGBoost Confusion Matrix", config.xgb_confusion_matrix_path)
@@ -175,11 +192,14 @@ def main() -> None:
         checkpoint_path=config.fusion_checkpoint_path,
     )
 
+    fusion_val_scores, fusion_val_targets = predict_fusion_model(fusion_model, val_loader, device)
+    fusion_threshold, _ = find_best_threshold(fusion_val_targets.astype(int), fusion_val_scores)
     fusion_scores, fusion_targets = predict_fusion_model(fusion_model, test_loader, device)
-    fusion_predictions = (fusion_scores >= 0.5).astype(int)
+    fusion_predictions = (fusion_scores >= fusion_threshold).astype(int)
     fusion_metrics = compute_binary_metrics(fusion_targets.astype(int), fusion_predictions, fusion_scores)
     fusion_metrics["best_epoch"] = training_result.best_epoch
     fusion_metrics["best_val_f1"] = training_result.best_val_f1
+    fusion_metrics["best_threshold"] = fusion_threshold
     save_metrics(fusion_metrics, config.fusion_metrics_path)
     save_predictions(pd.Index(test_idx), fusion_targets.astype(int), fusion_predictions, fusion_scores, config.fusion_predictions_path)
 
@@ -220,6 +240,27 @@ def main() -> None:
     }
     config.comparison_metrics_path.write_text(json.dumps(comparison_payload, indent=2), encoding="utf-8")
     LOGGER.info("Saved comparison metrics to %s", config.comparison_metrics_path)
+
+    production_model = "xgboost" if xgb_best_val_f1 >= training_result.best_val_f1 else "fusion"
+    serving_payload = {
+        "selected_model": production_model,
+        "selection_basis": "best_validation_f1",
+        "feature_sequence_length": config.feature_sequence_length,
+        "thresholds": {
+            "xgboost": xgb_threshold,
+            "fusion": fusion_threshold,
+        },
+        "validation_f1": {
+            "xgboost": xgb_best_val_f1,
+            "fusion": training_result.best_val_f1,
+        },
+        "test_f1": {
+            "xgboost": xgb_metrics["f1_score"],
+            "fusion": fusion_metrics["f1_score"],
+        },
+    }
+    config.serving_config_path.write_text(json.dumps(serving_payload, indent=2), encoding="utf-8")
+    LOGGER.info("Saved serving config to %s", config.serving_config_path)
     plot_model_comparison(comparison_frame, config.comparison_plot_path)
     plot_performance_summary(comparison_frame, config.metrics_plot_path)
 

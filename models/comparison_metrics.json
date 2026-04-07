@@ -41,7 +41,9 @@
         "support": 113.0
       }
     },
-    "roc_auc": 1.0
+    "roc_auc": 1.0,
+    "best_threshold": 0.1,
+    "best_val_f1": 1.0
   },
   "fusion": {
     "accuracy": 0.9911504424778761,
@@ -87,7 +89,8 @@
     },
     "roc_auc": 0.9980330448465775,
     "best_epoch": 5,
-    "best_val_f1": 1.0
+    "best_val_f1": 1.0,
+    "best_threshold": 0.5
   },
   "fusion_beats_xgboost": false
 }

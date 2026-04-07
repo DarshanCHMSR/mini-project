@@ -256,3 +256,51 @@ weighted avg        1.0     1.0       1.0    113.0
 2026-04-06 21:18:17 | INFO | eta=-- | src.visualization | Saved performance summary heatmap to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\plots\performance_summary.png
 2026-04-06 21:18:17 | INFO | eta=-- | pipeline | Saved run metadata to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\run_metadata.json
 2026-04-06 21:18:17 | INFO | eta=-- | pipeline | Pipeline complete | xgb_f1=1.0000 fusion_f1=0.9841 fusion_beats_xgb=False
+2026-04-07 14:51:47 | INFO | eta=-- | pipeline | Starting Phase 2 multimodal pipeline
+2026-04-07 14:51:47 | INFO | eta=-- | pipeline | Logging to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\logs\pipeline.log
+2026-04-07 14:51:47 | INFO | eta=-- | src.data | Loading parquet dataset from C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\dataset_V2.parquet
+2026-04-07 14:51:50 | INFO | eta=-- | src.data | Detected 58 tabular columns, 74 time-series columns, and 8 label columns
+2026-04-07 14:51:50 | INFO | eta=-- | src.data | Dataset summary: {'rows': 564, 'columns': 364, 'target_distribution': {'0': 409, '1': 155}, 'top_missing_ratio': {'DRY_acComp1TotalWeight': 0.723404255319149, 'DRY_acComp1DosRate': 0.723404255319149, 'DRY_acBatchCounter': 0.723404255319149, 'CV_Image4Name': 0.723404255319149, 'CV_Width': 0.723404255319149, 'DRY_acRegCircuitInletTemp': 0.723404255319149, 'SET_BackPressure': 0.723404255319149, 'DRY_acWeight': 0.723404255319149, 'DRY_acTotalWeight': 0.723404255319149, 'DRY_acDryCircuitDewPoint': 0.723404255319149, 'SIM_TotalWeight': 0.6382978723404256, 'SIM_InjectionPressureMax': 0.6382978723404256, 'SIM_TempGradVerStd': 0.6382978723404256, 'SIM_FlowRateMax': 0.6382978723404256, 'SIM_FlowRateArea': 0.6382978723404256}}
+2026-04-07 14:51:50 | INFO | eta=-- | src.data | Sequence length stats based on DXP_Inj1PrsAct: {'min': 8041, 'max': 12079, 'median': 11387.0, 'mean': 10989.260638297872}
+2026-04-07 14:51:50 | INFO | eta=-- | src.data | Created data splits with train=338 val=113 test=113
+2026-04-07 14:51:50 | INFO | eta=-- | src.data | Saved split indices to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\data\processed\split_indices.json
+2026-04-07 14:52:04 | INFO | eta=-- | src.features | Created 444 engineered time-series features from 74 DXP signals
+2026-04-07 14:52:04 | INFO | eta=-- | src.features | Combined feature matrix shape: (564, 502)
+2026-04-07 14:52:07 | INFO | eta=-- | src.modeling | Finished XGBoost training
+2026-04-07 14:52:07 | INFO | eta=-- | pipeline | Saved XGBoost model to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\xgboost_baseline.json
+2026-04-07 14:52:07 | INFO | eta=-- | pipeline | Saved XGBoost preprocessor to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\xgboost_preprocessor.joblib
+2026-04-07 14:52:07 | INFO | eta=-- | src.modeling | XGBoost metrics | accuracy=1.0000 precision=1.0000 recall=1.0000 f1=1.0000 auc=1.0000
+2026-04-07 14:52:07 | INFO | eta=-- | src.modeling | XGBoost metrics | accuracy=1.0000 precision=1.0000 recall=1.0000 f1=1.0000 auc=1.0000
+2026-04-07 14:52:08 | INFO | eta=-- | src.modeling | Saved metrics to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\xgboost_metrics.json
+2026-04-07 14:52:08 | INFO | eta=-- | src.modeling | Saved predictions to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\xgboost_test_predictions.csv
+2026-04-07 14:52:09 | INFO | eta=-- | src.visualization | Saved confusion matrix plot to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\plots\xgboost_confusion_matrix.png
+2026-04-07 14:52:10 | INFO | eta=-- | src.visualization | Saved feature importance plot to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\plots\xgboost_feature_importance.png
+2026-04-07 14:52:14 | INFO | eta=-- | src.features | Built sequence tensor with shape (338, 128, 74)
+2026-04-07 14:52:14 | INFO | eta=-- | src.features | Fitted multimodal preprocessor for 58 tabular and 74 sequence columns
+2026-04-07 14:52:14 | INFO | eta=-- | pipeline | Saved preprocessor bundle to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\preprocessor_bundle.joblib
+2026-04-07 14:52:21 | INFO | eta=-- | src.features | Built sequence tensor with shape (564, 128, 74)
+2026-04-07 14:52:40 | INFO | eta=00:01:03 | src.deep_learning | Epoch 1/25 | train_loss=0.8639 val_loss=0.8671 train_f1=0.5561 val_f1=0.6857 train_acc=0.7544 val_acc=0.8053 lr=0.001000 epoch_time=00:00:02
+2026-04-07 14:52:42 | INFO | eta=00:00:53 | src.deep_learning | Epoch 2/25 | train_loss=0.6128 val_loss=0.6226 train_f1=0.6949 val_f1=0.7848 train_acc=0.7870 val_acc=0.8496 lr=0.001000 epoch_time=00:00:02
+2026-04-07 14:52:44 | INFO | eta=00:00:50 | src.deep_learning | Epoch 3/25 | train_loss=0.5081 val_loss=0.3617 train_f1=0.7607 val_f1=0.8611 train_acc=0.8343 val_acc=0.9115 lr=0.001000 epoch_time=00:00:02
+2026-04-07 14:52:47 | INFO | eta=00:00:47 | src.deep_learning | Epoch 4/25 | train_loss=0.2918 val_loss=0.1518 train_f1=0.8774 val_f1=0.9254 train_acc=0.9231 val_acc=0.9558 lr=0.001000 epoch_time=00:00:02
+2026-04-07 14:52:49 | INFO | eta=00:00:46 | src.deep_learning | Epoch 5/25 | train_loss=0.1954 val_loss=0.0602 train_f1=0.9333 val_f1=1.0000 train_acc=0.9615 val_acc=1.0000 lr=0.001000 epoch_time=00:00:02
+2026-04-07 14:52:51 | INFO | eta=00:00:43 | src.deep_learning | Epoch 6/25 | train_loss=0.1151 val_loss=0.1140 train_f1=0.9735 val_f1=0.9394 train_acc=0.9852 val_acc=0.9646 lr=0.001000 epoch_time=00:00:02
+2026-04-07 14:52:54 | INFO | eta=00:00:40 | src.deep_learning | Epoch 7/25 | train_loss=0.1481 val_loss=0.1245 train_f1=0.9622 val_f1=0.9118 train_acc=0.9793 val_acc=0.9469 lr=0.001000 epoch_time=00:00:02
+2026-04-07 14:52:56 | INFO | eta=00:00:40 | src.deep_learning | Epoch 8/25 | train_loss=0.1205 val_loss=0.1357 train_f1=0.9442 val_f1=0.9394 train_acc=0.9675 val_acc=0.9646 lr=0.000500 epoch_time=00:00:02
+2026-04-07 14:52:58 | INFO | eta=00:00:35 | src.deep_learning | Epoch 9/25 | train_loss=0.0778 val_loss=0.0982 train_f1=0.9947 val_f1=0.9538 train_acc=0.9970 val_acc=0.9735 lr=0.000500 epoch_time=00:00:02
+2026-04-07 14:53:00 | INFO | eta=00:00:33 | src.deep_learning | Epoch 10/25 | train_loss=0.0604 val_loss=0.0588 train_f1=0.9894 val_f1=0.9841 train_acc=0.9941 val_acc=0.9912 lr=0.000500 epoch_time=00:00:02
+2026-04-07 14:53:03 | INFO | eta=00:00:31 | src.deep_learning | Epoch 11/25 | train_loss=0.0425 val_loss=0.0518 train_f1=1.0000 val_f1=0.9841 train_acc=1.0000 val_acc=0.9912 lr=0.000500 epoch_time=00:00:02
+2026-04-07 14:53:03 | INFO | eta=00:00:00 | src.deep_learning | Early stopping triggered at epoch 11
+2026-04-07 14:53:03 | INFO | eta=-- | src.modeling | Saved metrics to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\fusion_metrics.json
+2026-04-07 14:53:03 | INFO | eta=-- | src.modeling | Saved predictions to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\fusion_test_predictions.csv
+2026-04-07 14:53:04 | INFO | eta=-- | src.deep_learning | Saved TorchScript model to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\fusion_model.ts
+2026-04-07 14:53:06 | INFO | eta=-- | src.deep_learning | Saved ONNX model to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\fusion_model.onnx
+2026-04-07 14:53:06 | INFO | eta=-- | src.visualization | Saved confusion matrix plot to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\plots\fusion_confusion_matrix.png
+2026-04-07 14:53:07 | INFO | eta=-- | src.visualization | Saved training history plot to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\plots\fusion_training_curves.png
+2026-04-07 14:53:07 | INFO | eta=-- | src.visualization | Saved ROC curve to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\plots\fusion_roc_curve.png
+2026-04-07 14:53:07 | INFO | eta=-- | pipeline | Saved comparison metrics to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\comparison_metrics.json
+2026-04-07 14:53:07 | INFO | eta=-- | pipeline | Saved serving config to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\serving_config.json
+2026-04-07 14:53:08 | INFO | eta=-- | src.visualization | Saved model comparison plot to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\plots\model_comparison.png
+2026-04-07 14:53:08 | INFO | eta=-- | src.visualization | Saved performance summary heatmap to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\plots\performance_summary.png
+2026-04-07 14:53:08 | INFO | eta=-- | pipeline | Saved run metadata to C:\Users\Darsh\OneDrive\Desktop\full stack\mini-project\models\run_metadata.json
+2026-04-07 14:53:08 | INFO | eta=-- | pipeline | Pipeline complete | xgb_f1=1.0000 fusion_f1=0.9841 fusion_beats_xgb=False
